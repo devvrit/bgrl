@@ -13,6 +13,7 @@ def get_dataset(root, name, transform=NormalizeFeatures()):
         'coauthor-physics': (datasets.Coauthor, 'physics'),
         'amazon-computers': (datasets.Amazon, 'Computers'),
         'amazon-photos': (datasets.Amazon, 'Photo'),
+        'Cora': (datasets.Planetoid, 'Cora')
     }
 
     assert name in pyg_dataset_dict, "Dataset must be in {}".format(list(pyg_dataset_dict.keys()))

@@ -20,7 +20,7 @@ flags.DEFINE_integer('num_eval_splits', 3, 'Number of different train/test split
 
 # Dataset.
 flags.DEFINE_enum('dataset', 'coauthor-cs',
-                  ['amazon-computers', 'amazon-photos', 'coauthor-cs', 'coauthor-physics', 'wiki-cs'],
+                  ['amazon-computers', 'amazon-photos', 'coauthor-cs', 'coauthor-physics', 'wiki-cs', 'Cora'],
                   'Which graph dataset to use.')
 flags.DEFINE_string('dataset_dir', './data', 'Where the dataset resides.')
 
