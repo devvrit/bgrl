@@ -9,6 +9,7 @@ from torch.nn.functional import cosine_similarity
 from torch.optim import AdamW
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
+from torch_geometric.utils import to_undirected, add_remaining_self_loops
 
 from bgrl import *
 
@@ -20,7 +21,7 @@ flags.DEFINE_integer('num_eval_splits', 3, 'Number of different train/test split
 
 # Dataset.
 flags.DEFINE_enum('dataset', 'coauthor-cs',
-                  ['amazon-computers', 'amazon-photos', 'coauthor-cs', 'coauthor-physics', 'wiki-cs', 'Cora'],
+                  ['amazon-computers', 'amazon-photos', 'coauthor-cs', 'coauthor-physics', 'wiki-cs', 'Cora', 'Citeseer', 'Pubmed', 'ogbn-arxiv', 'ogbn-products'],
                   'Which graph dataset to use.')
 flags.DEFINE_string('dataset_dir', './data', 'Where the dataset resides.')
 
@@ -75,6 +76,8 @@ def main(argv):
     data = dataset[0]  # all dataset include one graph
     log.info('Dataset {}, {}.'.format(dataset.__class__.__name__, data))
     data = data.to(device)  # permanently move in gpy memory
+    #data.edge_index = to_undirected(data.edge_index)
+    data.edge_index = to_undirected(add_remaining_self_loops(data.edge_index)[0])
 
     # prepare transforms
     transform_1 = get_graph_drop_transform(drop_edge_p=FLAGS.drop_edge_p_1, drop_feat_p=FLAGS.drop_feat_p_1)
@@ -134,14 +137,16 @@ def main(argv):
         # make temporary copy of encoder
         tmp_encoder = copy.deepcopy(model.online_encoder).eval()
         representations, labels = compute_representations(tmp_encoder, dataset, device)
+        torch.save(representations, "embedding_cora.pt_epoch_"+str(epoch//FLAGS.eval_epochs))
 
+        return -1
         if FLAGS.dataset != 'wiki-cs':
             scores = fit_logistic_regression(representations.cpu().numpy(), labels.cpu().numpy(),
                                              data_random_seed=FLAGS.data_seed, repeat=FLAGS.num_eval_splits)
         else:
             scores = fit_logistic_regression_preset_splits(representations.cpu().numpy(), labels.cpu().numpy(),
                                                            train_masks, val_masks, test_masks)
-
+        print("score " + str(scores))
         for i, score in enumerate(scores):
             writer.add_scalar(f'accuracy/test_{i}', score, epoch)
 
